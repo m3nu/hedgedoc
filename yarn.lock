@@ -1227,9 +1227,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nestjs/typeorm@npm:8.0.3":
-  version: 8.0.3
-  resolution: "@nestjs/typeorm@npm:8.0.3"
+"@nestjs/typeorm@npm:next":
+  version: 9.0.0-next.2
+  resolution: "@nestjs/typeorm@npm:9.0.0-next.2"
   dependencies:
     uuid: 8.3.2
   peerDependencies:
@@ -1237,8 +1237,8 @@ __metadata:
     "@nestjs/core": ^8.0.0
     reflect-metadata: ^0.1.13
     rxjs: ^7.2.0
-    typeorm: ^0.2.34
-  checksum: 01b1fc97f18010867805f8718a677d71bb4a757fd1e1625fd0303a356a0a32a0e7da3a7458e0a71766756f894aac8b24eaa74b7c4a625370328338c8ca3f4661
+    typeorm: ^0.3.0
+  checksum: df962a707afc3252e543435b0581d01a9184e10905c0802970d65a9b238cccf9b8c80c53eeb3ed17ccde15a738242ab9491102cf3af954c2bd414f96af72b88b
   languageName: node
   linkType: hard
 
@@ -5418,7 +5418,7 @@ __metadata:
     "@nestjs/schematics": 8.0.10
     "@nestjs/swagger": 5.2.1
     "@nestjs/testing": 8.4.4
-    "@nestjs/typeorm": 8.0.3
+    "@nestjs/typeorm": next
     "@trivago/prettier-plugin-sort-imports": 3.2.0
     "@tsconfig/node12": 1.0.9
     "@types/bcrypt": 5.0.0
@@ -5476,7 +5476,7 @@ __metadata:
     ts-jest: 27.1.4
     ts-node: 10.7.0
     tsconfig-paths: 3.14.1
-    typeorm: 0.3.4
+    typeorm: 0.3.6
     typescript: 4.6.3
   languageName: unknown
   linkType: soft
@@ -9997,9 +9997,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typeorm@npm:0.3.4":
-  version: 0.3.4
-  resolution: "typeorm@npm:0.3.4"
+"typeorm@npm:0.3.6":
+  version: 0.3.6
+  resolution: "typeorm@npm:0.3.6"
   dependencies:
     "@sqltools/formatter": ^1.2.2
     app-root-path: ^3.0.0
@@ -10019,6 +10019,7 @@ __metadata:
     xml2js: ^0.4.23
     yargs: ^17.3.1
   peerDependencies:
+    "@google-cloud/spanner": ^5.18.0
     "@sap/hana-client": ^2.11.14
     better-sqlite3: ^7.1.2
     hdb-pool: ^0.1.6
@@ -10030,12 +10031,14 @@ __metadata:
     pg: ^8.5.1
     pg-native: ^3.0.0
     pg-query-stream: ^4.0.0
-    redis: ^3.1.1
+    redis: ^3.1.1 || ^4.0.0
     sql.js: ^1.4.0
     sqlite3: ^5.0.2
     ts-node: ^10.7.0
     typeorm-aurora-data-api-driver: ^2.0.0
   peerDependenciesMeta:
+    "@google-cloud/spanner":
+      optional: true
     "@sap/hana-client":
       optional: true
     better-sqlite3:
@@ -10072,7 +10075,7 @@ __metadata:
     typeorm: cli.js
     typeorm-ts-node-commonjs: cli-ts-node-commonjs.js
     typeorm-ts-node-esm: cli-ts-node-esm.js
-  checksum: 57938892096f6dd9b44887203230b2c5bbe808d8d64ec40dd2c9cdb72e1bc2436bf7f3ec4d67a85406fc8a64c6f8e819c7065d4984a0793caeb21d62e98e69b2
+  checksum: 7353b87a8161146c9bab765824857683f4755614c866326b1b260fdddc63470c7679e45c544f4761b7352d26b9f86bc933e1b44b0b1de4512cdc0ca5677db39a
   languageName: node
   linkType: hard
 
