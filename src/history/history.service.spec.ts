@@ -34,7 +34,7 @@ import { HistoryService } from './history.service';
 describe('HistoryService', () => {
   let service: HistoryService;
   let historyRepo: Repository<HistoryEntry>;
-  let connection;
+  let connection: Connection;
   let noteRepo: Repository<Note>;
 
   type MockConnection = {
@@ -467,6 +467,8 @@ describe('HistoryService', () => {
           expect(entry.updatedAt).toEqual(newlyCreatedHistoryEntry.updatedAt);
         }),
       };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       connection.transaction.mockImplementation((cb) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
