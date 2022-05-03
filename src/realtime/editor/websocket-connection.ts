@@ -59,17 +59,8 @@ export class WebsocketConnection {
   }
 
   public send(content: Uint8Array): void {
-    if (
-      this.websocket.readyState === WebSocket.CLOSING ||
-      this.websocket.readyState === WebSocket.CLOSED
-    ) {
+    if (this.websocket.readyState !== WebSocket.OPEN) {
       return;
-    }
-    if (
-      this.websocket.readyState !== WebSocket.CONNECTING &&
-      this.websocket.readyState !== WebSocket.OPEN
-    ) {
-      this.websocket.close();
     }
 
     try {
