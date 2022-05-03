@@ -5,11 +5,11 @@
  */
 import WebSocket from 'ws';
 
-
-
 import { RealtimeNote } from './realtime-note';
-import { encodeAwarenessMessage, encodeInitialSyncMessage } from './yjs-messages';
-
+import {
+  encodeAwarenessMessage,
+  encodeInitialSyncMessage,
+} from './yjs-messages';
 
 export class WebsocketConnection {
   private pongReceived = true;

@@ -3,13 +3,16 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only
  */
-import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
+import {
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  SubscribeMessage,
+  WebSocketGateway,
+} from '@nestjs/websockets';
 import { parse as parseCookie } from 'cookie';
 import { IncomingMessage } from 'http';
 import { decoding } from 'lib0';
 import WebSocket from 'ws';
-
-
 
 import { ConsoleLoggerService } from '../../logger/console-logger.service';
 import { Note } from '../../notes/note.entity';
@@ -21,7 +24,6 @@ import { HEDGEDOC_SESSION } from '../../utils/session';
 import { RealtimeNote } from './realtime-note';
 import { getNoteFromRealtimePath } from './utils/get-note-from-realtime-path';
 import { MessageType } from './yjs-messages';
-
 
 /**
  * Gateway implementing the realtime logic required for realtime note editing.

@@ -10,12 +10,9 @@ import WebSocket from 'ws';
 import { Awareness } from 'y-protocols/awareness';
 import { Doc } from 'yjs';
 
-
-
 import { WebsocketAwareness } from './websocket-awareness';
 import { WebsocketConnection } from './websocket-connection';
 import { WebsocketDoc } from './websocket-ydoc';
-
 
 export class RealtimeNote {
   protected readonly logger = new Logger(RealtimeNote.name);
