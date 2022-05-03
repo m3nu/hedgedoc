@@ -3,16 +3,13 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only
  */
-import {
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  SubscribeMessage,
-  WebSocketGateway,
-} from '@nestjs/websockets';
+import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
 import { parse as parseCookie } from 'cookie';
 import { IncomingMessage } from 'http';
 import { decoding } from 'lib0';
 import WebSocket from 'ws';
+
+
 
 import { ConsoleLoggerService } from '../../logger/console-logger.service';
 import { Note } from '../../notes/note.entity';
@@ -21,9 +18,10 @@ import { PermissionsService } from '../../permissions/permissions.service';
 import { SessionService } from '../../session/session.service';
 import { UsersService } from '../../users/users.service';
 import { HEDGEDOC_SESSION } from '../../utils/session';
-import { MessageType } from './message-type';
 import { RealtimeNote } from './realtime-note';
 import { getNoteFromRealtimePath } from './utils/get-note-from-realtime-path';
+import { MessageType } from './yjs-messages';
+
 
 /**
  * Gateway implementing the realtime logic required for realtime note editing.
@@ -56,22 +54,10 @@ export class RealtimeEditorGateway
       this.logger.log('Undefined realtime note for connection');
       return;
     }
-    realtimeNote.removeClient(client);
-    if (realtimeNote.hasNoClient()) {
-      realtimeNote.destroyNote();
+    realtimeNote.removeClient(client, () => {
       this.connectionToRealtimeNote.delete(client);
-      this.noteIdToRealtimeNote.delete(realtimeNote.getNote().id);
-    }
-  }
-
-  handleConnectionError(client: WebSocket, message: string): void {
-    // TODO Send error message to client to avoid reconnects for same note
-    this.logger.error(
-      'Error occurred. Closing connection',
-      message,
-      'websocket',
-    );
-    client.close();
+      this.noteIdToRealtimeNote.delete(realtimeNote.getNoteId());
+    });
   }
 
   /**
@@ -87,13 +73,29 @@ export class RealtimeEditorGateway
     client: WebSocket,
     req: IncomingMessage,
   ): Promise<void> {
+    this.logger.log(
+      `New realtime connection from ${req.socket.remoteAddress ?? 'unknown'}`,
+      'handleConnection',
+    );
     client.binaryType = 'arraybuffer';
-    //client.on('close', () => this.handleDisconnect(client));
-    //client.on('error', () => this.handleDisconnect(client));
+    client.on('error', (error) => {
+      this.logger.error(
+        'Error in websocket connection.',
+        error.message,
+        'handleConnection',
+      );
+      client.close();
+    });
 
     const cookieHeader = req.headers.cookie;
     if (!cookieHeader) {
-      return this.handleConnectionError(client, 'No cookie header present');
+      this.logger.error(
+        'Connection denied. No cookie header present.',
+        '',
+        'handleConnection',
+      );
+      client.close();
+      return;
     }
     const sessionCookie = parseCookie(cookieHeader);
     const cookieContent = sessionCookie[HEDGEDOC_SESSION];
@@ -101,10 +103,13 @@ export class RealtimeEditorGateway
     // const unsignedCookieContent = unsign();
     // TODO Verify signature of cookie content
     if (!cookieContent) {
-      return this.handleConnectionError(
-        client,
+      this.logger.error(
         `No ${HEDGEDOC_SESSION} cookie found`,
+        '',
+        'handleConnection',
       );
+      client.close();
+      return;
     }
     const sessionId = cookieContent.slice(2).split('.')[0];
     try {
@@ -119,21 +124,44 @@ export class RealtimeEditorGateway
       );
 
       if (!(await this.permissionsService.mayRead(user, note))) {
-        return this.handleConnectionError(
-          client,
-          `Reading note '${note.id}' by user '${user.username}' denied!`,
+        this.logger.error(
+          `Access denied to note '${note.id}' for user '${user.username}'`,
+          '',
+          'handleConnection',
         );
+        client.close();
+        return;
       }
 
       const realtimeNote = await this.getOrCreateRealtimeNote(note);
       this.connectionToRealtimeNote.set(client, realtimeNote);
+
+      if (
+        client.readyState === WebSocket.CLOSED ||
+        client.readyState === WebSocket.CLOSING
+      ) {
+        this.logger.error(
+          `Socket was closed before initialize`,
+          '',
+          'handleConnection',
+        );
+        client.close();
+        return;
+      }
+
       realtimeNote.connectClient(client);
       this.logger.debug(
         `Connection to note '${note.id}' (${note.publicId}) by user '${user.username}'`,
       );
     } catch (error: unknown) {
-      // TODO Send error message to client to avoid reconnects for same note
-      return this.handleConnectionError(client, String(error));
+      this.logger.error(
+        `Unknown error occurred while initializing: ${
+          (error as Error).message
+        }`,
+        (error as Error).stack,
+        'handleConnection',
+      );
+      client.close();
     }
   }
 
@@ -141,7 +169,7 @@ export class RealtimeEditorGateway
     const realtimeNote = this.noteIdToRealtimeNote.get(note.id);
     if (!realtimeNote) {
       const initialContent = await this.noteService.getNoteContent(note);
-      const realtimeNote = new RealtimeNote(note, initialContent);
+      const realtimeNote = new RealtimeNote(note.id, initialContent);
       this.noteIdToRealtimeNote.set(note.id, realtimeNote);
       return realtimeNote;
     } else {
@@ -154,17 +182,14 @@ export class RealtimeEditorGateway
    * SYNC messages are part of the Y-js protocol, containing changes on the note.
    * @param client The WebSocket client that sent the message.
    * @param decoder The decoder instance for decoding the message payload.
-   * @returns void If no response should be send for this request back to the client.
-   * @returns Uint8Array Binary data that should be send as a response to the message back to the client.
+   * @returns void If no response should be sent for this request back to the client.
+   * @returns Uint8Array Binary data that should be sent as a response to the message back to the client.
    */
   @SubscribeMessage(MessageType.SYNC)
   handleMessageSync(client: WebSocket, decoder: decoding.Decoder): void {
-    this.logger.debug('Received SYNC message');
-    const realtimeNote = this.connectionToRealtimeNote.get(client);
-    if (!realtimeNote) {
-      return;
-    }
-    realtimeNote.processSyncMessage(client, decoder);
+    this.connectionToRealtimeNote
+      .get(client)
+      ?.processSyncMessage(client, decoder);
   }
 
   /**
@@ -177,12 +202,9 @@ export class RealtimeEditorGateway
    */
   @SubscribeMessage(MessageType.AWARENESS)
   handleMessageAwareness(client: WebSocket, decoder: decoding.Decoder): void {
-    this.logger.debug('Received AWARENESS message');
-    const realtimeNote = this.connectionToRealtimeNote.get(client);
-    if (!realtimeNote) {
-      return;
-    }
-    realtimeNote.processAwarenessMessage(client, decoder);
+    this.connectionToRealtimeNote
+      .get(client)
+      ?.processAwarenessMessage(client, decoder);
   }
 
   /**

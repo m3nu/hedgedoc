@@ -9,7 +9,10 @@ import { MessageMappingProperties } from '@nestjs/websockets';
 import { decoding } from 'lib0';
 import WebSocket, { Server, ServerOptions } from 'ws';
 
-import { MessageType } from './message-type';
+
+
+import { MessageType } from './yjs-messages';
+
 
 export class YjsWebsocketAdapter extends WsAdapter {
   protected readonly logger = new Logger(YjsWebsocketAdapter.name);

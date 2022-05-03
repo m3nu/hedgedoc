@@ -3,17 +3,13 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only
  */
-import { decoding, encoding } from 'lib0';
+import { decoding } from 'lib0';
 import { Decoder } from 'lib0/decoding';
-import WebSocket from 'ws';
-import {
-  applyAwarenessUpdate,
-  Awareness,
-  encodeAwarenessUpdate,
-} from 'y-protocols/awareness';
+import { Awareness, removeAwarenessStates } from 'y-protocols/awareness';
 
-import { MessageType } from './message-type';
 import { RealtimeNote } from './realtime-note';
+import { WebsocketConnection } from './websocket-connection';
+import { decodeAwarenessMessage, encodeAwarenessMessage } from './yjs-messages';
 
 interface ClientIdUpdate {
   added: number[];
@@ -21,41 +17,44 @@ interface ClientIdUpdate {
   removed: number[];
 }
 
-export class WebsocketAwareness {
-  private readonly awareness: Awareness;
-
+export class WebsocketAwareness extends Awareness {
   constructor(private realtimeNote: RealtimeNote) {
-    this.awareness = new Awareness(realtimeNote.getYDoc());
-    this.awareness.setLocalState(null);
-    this.awareness.on('update', this.handleAwarenessUpdate.bind(this));
-  }
-
-  public getAwareness(): Awareness {
-    return this.awareness;
+    super(realtimeNote.getYDoc());
+    this.setLocalState(null);
+    this.on('update', this.handleAwarenessUpdate.bind(this));
   }
 
   private handleAwarenessUpdate(
     { added, updated, removed }: ClientIdUpdate,
-    origin: WebSocket,
+    origin: WebsocketConnection,
   ): void {
-    const changedClients = [...added, ...updated, ...removed];
-    const encoder = encoding.createEncoder();
-    encoding.writeVarUint(encoder, MessageType.AWARENESS);
-    encoding.writeVarUint8Array(
-      encoder,
-      encodeAwarenessUpdate(this.awareness, changedClients),
-    );
-    const binaryUpdate = encoding.toUint8Array(encoder);
+    if (origin) {
+      const controlledAwarenessIds = origin.getControlledAwarenessIds();
+      added.forEach((addId) => controlledAwarenessIds.add(addId));
+      removed.forEach((removedId) => controlledAwarenessIds.add(removedId));
+    }
+    const binaryUpdate = encodeAwarenessMessage(this, [
+      ...added,
+      ...updated,
+      ...removed,
+    ]);
     this.realtimeNote
-      .getWebsocketsExcept(origin)
+      .getConnections()
       .forEach((client) => client.send(binaryUpdate));
   }
 
-  public processAwarenessMessage(client: WebSocket, decoder: Decoder): void {
-    applyAwarenessUpdate(
-      this.awareness,
-      decoding.readVarUint8Array(decoder),
-      client,
+  public processAwarenessMessage(
+    client: WebsocketConnection,
+    decoder: Decoder,
+  ): void {
+    decodeAwarenessMessage(this, decoder, client);
+  }
+
+  public removeClient(websocketConnection: WebsocketConnection): void {
+    removeAwarenessStates(
+      this,
+      Array.from(websocketConnection.getControlledAwarenessIds()),
+      null,
     );
   }
 }
