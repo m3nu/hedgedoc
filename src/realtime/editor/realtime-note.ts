@@ -55,10 +55,6 @@ export class RealtimeNote {
    * @return {@code true} when the client was the last one in this realtime note, {@code false} otherwise.
    */
   public removeClient(client: WebSocket, onDestroy: () => void): void {
-    const websocketConnection = this.clients.get(client);
-    if (websocketConnection) {
-      this.websocketAwareness.removeClient(websocketConnection);
-    }
     this.clients.delete(client);
 
     this.logger.log(`Client disconnected. ${this.clients.size} left.`);

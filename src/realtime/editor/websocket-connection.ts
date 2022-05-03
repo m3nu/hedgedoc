@@ -14,7 +14,6 @@ import {
 export class WebsocketConnection {
   private pongReceived = true;
   private readonly pingTimeout = 30 * 1000;
-  private controlledAwarenessIds: Set<number> = new Set();
 
   constructor(
     private websocket: WebSocket,
@@ -78,9 +77,5 @@ export class WebsocketConnection {
     } catch (error: unknown) {
       this.websocket.close();
     }
-  }
-
-  public getControlledAwarenessIds(): Set<number> {
-    return this.controlledAwarenessIds;
   }
 }

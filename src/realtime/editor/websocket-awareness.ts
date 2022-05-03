@@ -24,15 +24,11 @@ export class WebsocketAwareness extends Awareness {
     this.on('update', this.handleAwarenessUpdate.bind(this));
   }
 
-  private handleAwarenessUpdate(
-    { added, updated, removed }: ClientIdUpdate,
-    origin: WebsocketConnection,
-  ): void {
-    if (origin) {
-      const controlledAwarenessIds = origin.getControlledAwarenessIds();
-      added.forEach((addId) => controlledAwarenessIds.add(addId));
-      removed.forEach((removedId) => controlledAwarenessIds.add(removedId));
-    }
+  private handleAwarenessUpdate({
+    added,
+    updated,
+    removed,
+  }: ClientIdUpdate): void {
     const binaryUpdate = encodeAwarenessMessage(this, [
       ...added,
       ...updated,
@@ -48,13 +44,5 @@ export class WebsocketAwareness extends Awareness {
     decoder: Decoder,
   ): void {
     decodeAwarenessMessage(this, decoder, client);
-  }
-
-  public removeClient(websocketConnection: WebsocketConnection): void {
-    removeAwarenessStates(
-      this,
-      Array.from(websocketConnection.getControlledAwarenessIds()),
-      null,
-    );
   }
 }

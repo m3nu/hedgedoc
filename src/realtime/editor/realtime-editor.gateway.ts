@@ -138,10 +138,7 @@ export class RealtimeEditorGateway
       const realtimeNote = await this.getOrCreateRealtimeNote(note);
       this.connectionToRealtimeNote.set(client, realtimeNote);
 
-      if (
-        client.readyState === WebSocket.CLOSED ||
-        client.readyState === WebSocket.CLOSING
-      ) {
+      if (client.readyState !== WebSocket.OPEN) {
         this.logger.error(
           `Socket was closed before initialize`,
           '',
