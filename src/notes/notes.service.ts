@@ -123,6 +123,7 @@ export class NotesService {
    * @return {string} the content of the note
    */
   async getNoteContent(note: Note): Promise<string> {
+    //TODO: Get current content from realtime
     return (await this.getLatestRevision(note)).content;
   }
 
