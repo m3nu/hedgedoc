@@ -78,14 +78,6 @@ export class RealtimeNote {
     return this.noteId;
   }
 
-  public getConnectionExcept(
-    except: WebsocketConnection,
-  ): WebsocketConnection[] {
-    const otherClients = new Set(this.clients.values());
-    otherClients.delete(except);
-    return [...otherClients];
-  }
-
   public getConnections(): WebsocketConnection[] {
     return [...this.clients.values()];
   }

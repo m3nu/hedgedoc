@@ -26,9 +26,11 @@ export class WebsocketDoc extends Doc {
     origin: WebsocketConnection,
   ): void {
     const binaryUpdate = encodeSyncMessage(update);
-    this.realtimeNote
-      .getConnectionExcept(origin)
-      .forEach((client) => client.send(binaryUpdate));
+    this.realtimeNote.getConnections().forEach((client) => {
+      if (origin !== client) {
+        client.send(binaryUpdate);
+      }
+    });
   }
 
   public processSyncMessage(
